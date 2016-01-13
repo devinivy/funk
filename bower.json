@@ -18,6 +18,10 @@
     "url": "git://github.com/devinivy/funk.git"
   },
   "main": "funk-store-behavior.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#~1.2.0",
+    "yarn-state-behavior": "yarn-co/yarn-state-behavior#~0.3.0"
+  },
   "devDependencies": {
     "iron-component-page": "polymerelements/iron-component-page#^1.0.0",
     "test-fixture": "polymerelements/test-fixture#^1.0.0",

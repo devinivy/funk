@@ -13,12 +13,17 @@
     <script src="../../test-fixture/test-fixture-mocha.js"></script>
 
     <link rel="import" href="../../test-fixture/test-fixture.html">
+    <link rel="import" href="../reflux-core.html">
+    <link rel="import" href="some-store.html">
+    <link rel="import" href="some-view.html">
 
   </head>
   <body>
 
     <test-fixture id="simple">
       <template>
+        <some-store></some-store>
+        <some-view></some-view>
       </template>
     </test-fixture>
 
@@ -28,14 +33,21 @@
         suite('when X', function() {
 
           var funk;
+          var store;
+          var view;
 
           setup(function() {
 
             funk = fixture('simple');
+            store = funk[0];
+            view = funk[1];
           });
 
-          test('it Y.', function(done) {
+          test('it.', function(done) {
 
+            expect(view.foundState).to.equal('init');
+            store.inState = 'changed';
+            expect(view.foundState).to.equal('changed');
             done();
           });
 

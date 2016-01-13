@@ -1,0 +1,31 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../yarn-state-behavior/yarn-state-behavior.html">
+
+<script>
+(function() {
+
+  Polymer({
+
+    is: 'some-view',
+
+    behaviors: [
+      YarnBehaviors.StateBehavior
+    ],
+
+    properties: {
+
+      foundState: {
+        type: String,
+        computed: '_mirrors(state.some.inState)'
+      }
+
+    },
+
+    _mirrors: function(a) {
+      return a;
+    }
+
+  });
+
+})();
+</script>

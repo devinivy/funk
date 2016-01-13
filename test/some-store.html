@@ -1,0 +1,37 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../funk-store-behavior.html">
+
+<script>
+(function() {
+
+  Polymer({
+
+    is: 'some-store',
+
+    behaviors: [
+      Funk.StoreBehavior
+    ],
+
+    properties: {
+
+      store: {
+        value: 'some'
+      },
+
+      notInState: {
+        type: String,
+        value: 'init'
+      },
+
+      inState: {
+        type: String,
+        value: 'init',
+        notify: true
+      }
+
+    }
+
+  });
+
+})();
+</script>

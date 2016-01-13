@@ -1,4 +1,5 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../yarn-state-behavior/yarn-state-behavior.html">
 <link rel="import" href="reflux-core.html">
 
 <script>
@@ -10,23 +11,126 @@ var Funk = Funk || {};
 
   var internals = {};
 
+  internals.makeEventName = function(propName) {
+
+    return propName.replace(/([a-z][A-Z])/g,
+      function (g) {
+        return g[0] + '-' + g[1].toLowerCase()
+      }
+    ) + '-changed';
+  };
+
   /**
   How to do it!
 
   @polymerBehavior Funk.StoreBehavior
   */
-  Funk.StoreBehavior = {
+  Funk.StoreBehaviorImpl = {
 
     properties: {
 
       /**
-       * About the prop.
+       * Name of the store.
+       *
        */
-      name: { info: 'info' }
+      store: {
+        type: String,
+        readOnly: true
+      }
 
+    },
+
+    // This will be mapped to Reflux's "listenables"
+    refluxListeners: [],
+
+    ready: function() {
+
+      var self = this;
+
+      if (!this.store) {
+        throw new Error('Store must have a name.');
+      }
+
+      // Link store names to state
+
+      var notifies;
+      var propName;
+      var properties = Object.keys(this.properties);
+      for (var i = 0; i < properties.length; i++) {
+
+        propName = properties[i];
+        notifies = this.properties[propName].notify;
+
+        if (propName !== 'store' && propName !== 'state' && notifies) {
+
+          this.state[propName] = this[propName];
+          this.linkPaths('state.' + propName, propName);
+
+          this.addEventListener(internals.makeEventName(propName), function(e) {
+
+            self.state[propName] = self[propName];
+          });
+        }
+      }
+
+      // Map listenables
+      this.listenables = this.listenables || this.refluxListeners;
+
+      // Remove Polymer-specific clashes that we don't care for.
+      // TODO: of course, this doesn't work
+      delete this.listen;
+
+      // Make store out of the whole dang element
+      Reflux.createStore(this);
+    },
+
+    deriveItem: function(prop, all, id) {
+
+      this.set(prop, all[id]);
+
+      // Implicitly unlinks any previously linked paths
+      this.linkPaths(prop, all + '.' + id);
+    },
+
+    deriveList: function(prop, all, ids) {
+
+      // Unlink existing paths
+      var currentList = this.get(prop) || [];
+      for (var i = 0; i < currentList.length; i++) {
+        this.unlinkPaths(prop + '.#' + i);
+      }
+
+      // Create new list, linking paths
+      var list = [];
+      var id;
+      for (var j = 0; j < ids.length; j++) {
+        id = ids[j];
+        list.push(all[id]);
+        this.linkPaths(prop + '.#' + j, all + '.' + id);
+      }
+
+      // Finally set list
+      this.set(prop, list);
+    },
+
+    arrToObject: function(list, idField) {
+
+      idField = idField || 'id';
+
+      var obj = {};
+      for (var i = 0; i < list.length; i++) {
+        obj[list[i][idField]] = list[i];
+      }
+
+      return obj;
     }
 
   };
+
+  Funk.StoreBehavior = [
+    YarnBehaviors.StateBehavior,
+    Funk.StoreBehaviorImpl
+  ];
 
 })();
 </script>
