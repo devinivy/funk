@@ -9,17 +9,6 @@ var Funk = Funk || {};
 
   var Reflux = Funk.Reflux = require('reflux-core');
 
-  var internals = {};
-
-  internals.makeEventName = function(propName) {
-
-    return propName.replace(/([a-z][A-Z])/g,
-      function (g) {
-        return g[0] + '-' + g[1].toLowerCase()
-      }
-    ) + '-changed';
-  };
-
   /**
   How to do it!
 
@@ -40,48 +29,63 @@ var Funk = Funk || {};
 
     },
 
-    // This will be mapped to Reflux's "listenables"
-    refluxListeners: [],
+    // Acts like reflux's "listenables"
+    refluxListenables: [],
 
     ready: function() {
-
-      var self = this;
 
       if (!this.store) {
         throw new Error('Store must have a name.');
       }
 
-      // Link store names to state
+      // Hook-up listenables
 
-      var notifies;
-      var propName;
-      var properties = Object.keys(this.properties);
-      for (var i = 0; i < properties.length; i++) {
-
-        propName = properties[i];
-        notifies = this.properties[propName].notify;
-
-        if (propName !== 'store' && propName !== 'state' && notifies) {
-
-          this.state[propName] = this[propName];
-          this.linkPaths('state.' + propName, propName);
-
-          this.addEventListener(internals.makeEventName(propName), function(e) {
-
-            self.state[propName] = self[propName];
-          });
-        }
+      var listenables = [].concat(this.refluxListenables);
+      for (var i = 0; i < listenables.length; i++) {
+        this.listenToMany(listenables[i]);
       }
+    },
 
-      // Map listenables
-      this.listenables = this.listenables || this.refluxListeners;
+    attached: function() {
 
-      // Remove Polymer-specific clashes that we don't care for.
-      // TODO: of course, this doesn't work
-      delete this.listen;
+      // Wrap binding logic in async to allow computed bindings, etc. to settle
+      this.async(function() {
 
-      // Make store out of the whole dang element
-      Reflux.createStore(this);
+        // Init storage spot
+        this.state[this.store] = {};
+
+        // Link store names to state
+
+        var notifies;
+        var propName;
+        var properties = Object.keys(this.properties);
+        for (var i = 0; i < properties.length; i++) {
+
+          propName = properties[i];
+          notifies = this.properties[propName].notify;
+
+          if (propName !== 'store' && propName !== 'state' && notifies) {
+
+            // Set state and link paths.  Path linking takes care of passing
+            // along deep changes, but not shallow ones.
+            // E.g. passes along `someProp.length` but not `someProp`
+            this.set(['state', this.store, propName], this[propName]);
+            this.linkPaths('state.' + this.store + '.' + propName, propName);
+
+            // Now take care of shallow changes by simply listening, ignoring
+            // changes to deep paths.
+            var changedEvent = Polymer.CaseMap.camelToDashCase(propName) + '-changed';
+            var changedListener = function(prop, e) {
+
+              if (!e.detail.path) {
+                this.set(['state', this.store, prop], this[prop]);
+              }
+            };
+
+            this.addEventListener(changedEvent, changedListener.bind(this, propName));
+          }
+        }
+      });
     },
 
     deriveItem: function(prop, all, id) {
@@ -129,6 +133,7 @@ var Funk = Funk || {};
 
   Funk.StoreBehavior = [
     YarnBehaviors.StateBehavior,
+    Reflux.ListenerMethods,
     Funk.StoreBehaviorImpl
   ];
 
