@@ -1,5 +1,6 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="../funk-store-behavior.html">
+<link rel="import" href="some-actions.html">
 
 <script>
 (function() {
@@ -18,17 +19,40 @@
         value: 'some'
       },
 
-      notInState: {
+      private: {
         type: String,
-        value: 'init'
+        value: 'private'
       },
 
-      inState: {
+      simple: {
         type: String,
         value: 'init',
         notify: true
+      },
+
+      arr: {
+        type: Array,
+        value: function() {
+          return [];
+        },
+        notify: true
+      },
+
+      obj: {
+        type: String,
+        value: function() {
+          return {};
+        },
+        notify: true
       }
 
+    },
+
+    refluxListenables: SomeActions,
+
+    onSmellFinger: function(whichFinger) {
+
+      this.simple = whichFinger;
     }
 
   });

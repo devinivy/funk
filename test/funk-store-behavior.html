@@ -16,6 +16,7 @@
     <link rel="import" href="../reflux-core.html">
     <link rel="import" href="some-store.html">
     <link rel="import" href="some-view.html">
+    <link rel="import" href="some-actions.html">
 
   </head>
   <body>
@@ -28,9 +29,9 @@
     </test-fixture>
 
     <script>
-      suite('<funk-store-behavior>', function() {
+      suite('Funk', function() {
 
-        suite('when X', function() {
+        suite('StoreBehavior', function() {
 
           var funk;
           var store;
@@ -39,15 +40,67 @@
           setup(function() {
 
             funk = fixture('simple');
-            store = funk[0];
             view = funk[1];
+            store = funk[0];
           });
 
-          test('it.', function(done) {
+          test('propagates state with predictable timing.', function(done) {
 
-            expect(view.foundState).to.equal('init');
-            store.inState = 'changed';
-            expect(view.foundState).to.equal('changed');
+            // At this point the components are attached
+
+            expect(store.simple).to.equal('init');
+            expect(view.finger).to.equal(undefined);
+
+            store.simple = 'thumb';
+
+            expect(store.simple).to.equal('thumb');
+            expect(view.finger).to.equal(undefined);
+
+            store.async(function() {
+
+              // Now they're dom-readied
+
+              expect(store.simple).to.equal('thumb');
+              expect(view.finger).to.equal('thumb');
+
+              store.simple = 'pinky';
+
+              expect(store.simple).to.equal('pinky');
+              expect(view.finger).to.equal('pinky');
+
+              done();
+            });
+          });
+
+          test('propagates complex array state.', function(done) {
+
+            store.async(function() {
+
+              expect(view.toeCount).to.equal(0);
+
+              store.push('arr', 'little-piggy');
+              expect(view.toeCount).to.equal(1);
+
+              store.push('arr', 'middle-piggy');
+              store.push('arr', 'big-piggy');
+              expect(view.toeCount).to.equal(3);
+
+              store.splice('arr', 1, 1);
+              expect(view.toeCount).to.equal(2);
+
+              expect(view.state.some.arr[0]).to.equal('little-piggy');
+              expect(view.state.some.arr[1]).to.equal('big-piggy');
+
+              done();
+            });
+          });
+
+          test('wires-up listenable actions before attached.', function(done) {
+
+            expect(store.simple).to.equal('init');
+            store.simple = 'thumb';
+            expect(store.simple).to.equal('thumb');
+
             done();
           });
 

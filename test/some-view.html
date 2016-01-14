@@ -14,14 +14,24 @@
 
     properties: {
 
-      foundState: {
+      finger: {
         type: String,
-        computed: '_mirrors(state.some.inState)'
+        computed: '_mirror(state.some.simple)'
+      },
+
+      toeCount: {
+        type: Number,
+        computed: '_mirror(state.some.arr.length, 0)'
       }
 
     },
 
-    _mirrors: function(a) {
+    _mirror: function(a, def) {
+
+      if (typeof a === 'undefined' && typeof def !== 'undefined') {
+        return def;
+      }
+
       return a;
     }
 
