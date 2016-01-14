@@ -97,7 +97,7 @@
           test('wires-up listenable actions before attached.', function(done) {
 
             expect(store.simple).to.equal('init');
-            store.simple = 'thumb';
+            SomeActions.smellFinger('thumb');
             expect(store.simple).to.equal('thumb');
 
             done();
