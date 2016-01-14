@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git://github.com/devinivy/funk.git"
   },
-  "main": "funk-store-behavior.html",
+  "main": "funk.html",
   "dependencies": {
     "polymer": "Polymer/polymer#~1.2.0",
     "yarn-state-behavior": "yarn-co/yarn-state-behavior#~0.3.0"
