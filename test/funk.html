@@ -17,6 +17,7 @@
     <link rel="import" href="../reflux-core.html">
     <link rel="import" href="../funk.html">
     <link rel="import" href="some-store.html">
+    <link rel="import" href="bad-store.html">
     <link rel="import" href="some-view.html">
     <link rel="import" href="some-actions.html">
 
@@ -192,6 +193,21 @@
             expect(numberCollection[11]).to.equal(numberArray[0]);
             expect(numberCollection[22]).to.equal(numberArray[1]);
             expect(numberCollection[33]).to.equal(numberArray[2]);
+
+            done();
+          });
+
+          test('throws when creating a store without a name.', function(done) {
+
+            expect(function() {
+
+              var ready = Funk.StoreBehaviorImpl.ready.bind({
+                storeName: null
+              });
+
+              ready();
+
+            }).to.throw('Store must have a name.');
 
             done();
           });
