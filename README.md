@@ -12,7 +12,10 @@ Funk marries Polymer and Reflux by allowing you to use standard Polymer v1 data-
   - Your **stores** are Polymerized Reflux stores.
     - Views subscribe to stores via **Polymer data-binding!**
 
-view.html
+### Example
+Learn to use Funk by walking through this commented code!  If you're unfamiliar with Reflux or the flux pattern, start reading [here](https://github.com/reflux/refluxjs) to see how it will make your life better-er.
+
+#### `view.html`
 ```html
 <link rel="import" href="bower_components/polymer/polymer.html">
 <link rel="import" href="bower_components/funk/funk.html">
@@ -57,18 +60,19 @@ Polymer({
 </script>
 ```
 
-actions.html
+#### `actions.html`
 ```html
 <link rel="import" href="bower_components/funk/funk.html">
 
 <script>
+  // Funk.Reflux is just a reference to the Reflux library
   var MyActions = Funk.Reflux.createActions([
     'smellFinger'
   ]);
 </script>
 ```
 
-store.html
+#### `store.html`
 ```html
 <link rel="import" href="bower_components/polymer/polymer.html">
 <link rel="import" href="bower_components/funk/funk.html">
@@ -79,6 +83,8 @@ Polymer({
 
   is: 'my-store',
 
+  // The StoreBehavior makes this element act
+  // like a Reflux store... but in Polymer-land.
   behaviors: [
     Funk.StoreBehavior
   ],
@@ -92,14 +98,19 @@ Polymer({
 
     finger: {
       type: String,
-      notify: true
+      value: '',    // Initial finger state
+      notify: true  // Indicates that this prop is part of app state
     }
 
   },
 
+  // Subscribe to actions!
+  // This works identically to Reflux's "listenables"
   funkListenables: MyActions,
 
   onSmellFinger: function(whichFinger) {
+    // Setting finger here will notify
+    // state.myStore.finger across your app
     this.finger = whichFinger;
   }
 
