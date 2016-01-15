@@ -22,7 +22,8 @@ var Funk = Funk || {};
 
   A note on timing: stores may be initialized all the way through the `attached()` Polymer lifecycle hook– `state.[myStore]` comes into effect _directly after_ the `attached()` hook (using microtask timing).  This is consistent with the timing with which Polymer's computed properties resolve.
 
-  @polymerBehavior Funk.StoreBehavior
+  @polymerBehavior
+  @demo demo/index.html Funk.StoreBehavior
   */
   Funk.StoreBehaviorImpl = {
 
@@ -204,7 +205,8 @@ var Funk = Funk || {};
   /**
   An alias of [YarnBehaviors.StateBehavior](https://github.com/yarn-co/yarn-state-behavior)
 
-  @polymerBehavior Funk.ViewBehavior
+  @polymerBehavior
+  @demo demo/index.html Funk.ViewBehavior
   */
   Funk.ViewBehavior = [
     YarnBehaviors.StateBehavior
