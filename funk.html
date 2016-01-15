@@ -90,7 +90,7 @@ var Funk = Funk || {};
 
     deriveItem: function(prop, all, id) {
 
-      this.set(prop, all[id]);
+      this.set(prop, this[all][id]);
 
       // Implicitly unlinks any previously linked paths
       this.linkPaths(prop, all + '.' + id);
