@@ -22,7 +22,7 @@ var Funk = Funk || {};
        * Name of the store.
        *
        */
-      store: {
+      storeName: {
         type: String,
         readOnly: true
       }
@@ -30,17 +30,17 @@ var Funk = Funk || {};
     },
 
     // Acts like reflux's "listenables"
-    refluxListenables: [],
+    funkListenables: [],
 
     ready: function() {
 
-      if (!this.store) {
+      if (!this.storeName) {
         throw new Error('Store must have a name.');
       }
 
       // Hook-up listenables
 
-      var listenables = [].concat(this.refluxListenables);
+      var listenables = [].concat(this.funkListenables);
       for (var i = 0; i < listenables.length; i++) {
         this.listenToMany(listenables[i]);
       }
@@ -52,7 +52,7 @@ var Funk = Funk || {};
       this.async(function() {
 
         // Init storage spot
-        this.state[this.store] = {};
+        this.state[this.storeName] = {};
 
         // Link store names to state
 
@@ -64,13 +64,13 @@ var Funk = Funk || {};
           propName = properties[i];
           notifies = this.properties[propName].notify;
 
-          if (propName !== 'store' && propName !== 'state' && notifies) {
+          if (propName !== 'storeName' && propName !== 'state' && notifies) {
 
             // Set state and link paths.  Path linking takes care of passing
             // along deep changes, but not shallow ones.
             // E.g. passes along `someProp.length` but not `someProp`
-            this.set(['state', this.store, propName], this[propName]);
-            this.linkPaths('state.' + this.store + '.' + propName, propName);
+            this.set(['state', this.storeName, propName], this[propName]);
+            this.linkPaths('state.' + this.storeName + '.' + propName, propName);
 
             // Now take care of shallow changes by simply listening, ignoring
             // changes to deep paths.
@@ -78,7 +78,7 @@ var Funk = Funk || {};
             var changedListener = function(prop, e) {
 
               if (!e.detail.path) {
-                this.set(['state', this.store, prop], this[prop]);
+                this.set(['state', this.storeName, prop], this[prop]);
               }
             };
 
@@ -135,6 +135,15 @@ var Funk = Funk || {};
     YarnBehaviors.StateBehavior,
     Reflux.ListenerMethods,
     Funk.StoreBehaviorImpl
+  ];
+
+  /**
+  An alias of [YarnBehaviors.StateBehavior](https://github.com/yarn-co/yarn-state-behavior)
+
+  @polymerBehavior Funk.ViewBehavior
+  */
+  Funk.ViewBehavior = [
+    YarnBehaviors.StateBehavior
   ];
 
 })();
