@@ -109,7 +109,7 @@ var Funk = Funk || {};
       var id;
       for (var j = 0; j < ids.length; j++) {
         id = ids[j];
-        list.push(all[id]);
+        list.push(this[all][id]);
         this.linkPaths(prop + '.#' + j, all + '.' + id);
       }
 
