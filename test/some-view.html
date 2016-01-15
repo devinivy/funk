@@ -27,6 +27,11 @@
       numberInfo: {
         type: String,
         computed: '_mirror(state.some.itemFromColl.val)'
+      },
+
+      numberList: {
+        type: Array,
+        computed: '_mirror(state.some.listFromColl)'
       }
 
     },

@@ -13,6 +13,9 @@
     <script src="../../test-fixture/test-fixture-mocha.js"></script>
 
     <link rel="import" href="../../test-fixture/test-fixture.html">
+
+    <link rel="import" href="../reflux-core.html">
+    <link rel="import" href="../funk.html">
     <link rel="import" href="some-store.html">
     <link rel="import" href="some-view.html">
     <link rel="import" href="some-actions.html">
@@ -95,6 +98,22 @@
             });
           });
 
+          test('does not propagate non-notifying properties.', function(done) {
+
+            store.async(function() {
+
+              expect(view.state.some.private).to.equal(undefined);
+              expect(store.private).to.equal('private');
+
+              store.private = 'secret-finger';
+
+              expect(view.state.some.private).to.equal(undefined);
+              expect(store.private).to.equal('secret-finger');
+
+              done();
+            });
+          });
+
           test('wires-up listenable actions before attached.', function(done) {
 
             expect(store.simple).to.equal('init');
@@ -118,6 +137,87 @@
 
               done();
             });
+          });
+
+          test('deriveList() derives a list from a collection, linking paths.', function(done) {
+
+            store.async(function() {
+
+              expect(view.numberList).to.equal(undefined);
+
+              store.deriveList('listFromColl', 'collection', [1, 4, 5]);
+              expect(view.numberList.length).to.equal(3);
+              expect(view.numberList[0].val).to.equal('one');
+              expect(view.numberList[1].val).to.equal('four');
+              expect(view.numberList[2].val).to.equal('five');
+
+              store.set('collection.4.val', 'fore');
+              expect(view.numberList[1].val).to.equal('fore');
+
+              done();
+            });
+          });
+
+          test('arrayToCollection() helper turns an array into a id-indexed object by default.', function(done) {
+
+            var numberArray = [
+              { id: 1, val: 'one'},
+              { id: 2, val: 'two' },
+              { id: 3, val: 'three' }
+            ];
+
+            var numberCollection = store.arrayToCollection(numberArray);
+
+            expect(numberCollection).to.be.instanceof(Object);
+            expect(Object.keys(numberCollection).length).to.equal(3);
+            expect(numberCollection[1]).to.equal(numberArray[0]);
+            expect(numberCollection[2]).to.equal(numberArray[1]);
+            expect(numberCollection[3]).to.equal(numberArray[2]);
+
+            done();
+          });
+
+          test('arrayToCollection() helper turns an array into a <key>-indexed object.', function(done) {
+
+            var numberArray = [
+              { id: 1, other: 11, val: 'one'},
+              { id: 2, other: 22, val: 'two' },
+              { id: 3, other: 33, val: 'three' }
+            ];
+
+            var numberCollection = store.arrayToCollection(numberArray, 'other');
+
+            expect(numberCollection).to.be.instanceof(Object);
+            expect(Object.keys(numberCollection).length).to.equal(3);
+            expect(numberCollection[11]).to.equal(numberArray[0]);
+            expect(numberCollection[22]).to.equal(numberArray[1]);
+            expect(numberCollection[33]).to.equal(numberArray[2]);
+
+            done();
+          });
+
+        });
+
+        suite('ViewBehavior', function() {
+
+          test('is an alias for YarnBehaviors.StateBehavior.', function(done) {
+
+            expect(Funk.ViewBehavior).to.be.instanceof(Array);
+            expect(Funk.ViewBehavior.length).to.equal(1);
+            expect(Funk.ViewBehavior[0]).to.equal(YarnBehaviors.StateBehavior);
+
+            done();
+          });
+
+        });
+
+        suite('Reflux', function() {
+
+          test('is an alias for reflux-core.', function(done) {
+
+            expect(Funk.Reflux).to.equal(require('reflux-core'));
+
+            done();
           });
 
         });
