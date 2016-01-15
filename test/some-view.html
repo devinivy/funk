@@ -22,6 +22,11 @@
       toeCount: {
         type: Number,
         computed: '_mirror(state.some.arr.length, 0)'
+      },
+
+      numberInfo: {
+        type: String,
+        computed: '_mirror(state.some.itemFromColl.val)'
       }
 
     },

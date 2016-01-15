@@ -39,10 +39,27 @@
       },
 
       obj: {
-        type: String,
+        type: Object,
         value: function() {
           return {};
         },
+        notify: true
+      },
+
+      collection: {
+        type: Object,
+        value: function() {
+          return {
+            1: { id: 1, val: 'one' },
+            2: { id: 2, val: 'two' },
+            3: { id: 3, val: 'three' },
+          };
+        },
+        notify: true
+      },
+
+      itemFromColl: {
+        type: Object,
         notify: true
       }
 
