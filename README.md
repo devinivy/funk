@@ -1,5 +1,4 @@
 # funk
-**Funk.StoreBehavior**
 
 Polymer high-fives Reflux
 
@@ -11,6 +10,16 @@ Funk marries Polymer and Reflux by allowing you to use standard Polymer v1 data-
   - Your **actions** are Reflux actions.
   - Your **stores** are Polymerized Reflux stores.
     - Views subscribe to stores via **Polymer data-binding!**
+
+### What You'll Find
+#### `Funk.Reflux`
+An alias for [reflux-core](https://github.com/reflux/reflux-core) (identical to [RefluxJS](https://github.com/reflux/refluxjs), but without the React helpers).  You'll find all the standard goodies on here like `Funk.Reflux.createActions()`.
+
+#### `Funk.StoreBehavior`
+The Polymer behavior used to create a Polymerized Reflux store.  Enables data-binding from the store to your views.
+
+#### `Funk.ViewBehavior`
+The Polymer behavior used to enable data-binding to a view from your stores.
 
 ### Example
 Learn to use Funk by walking through this commented code!  If you're unfamiliar with Reflux or the flux pattern, start reading [here](https://github.com/reflux/refluxjs) to see how it will make your life better-er.
@@ -93,7 +102,7 @@ Polymer({
 
     storeName: {
       type: String,
-      value: 'myStore'
+      value: 'myStore' // Name of the store as found on `state.myStore`
     },
 
     finger: {
