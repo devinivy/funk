@@ -22,7 +22,7 @@ The Polymer behavior used to create a Polymerized Reflux store.  Enables data-bi
 The Polymer behavior used to enable data-binding to a view from your stores.
 
 ### Example
-Learn to use Funk by walking through this commented code!  If you're unfamiliar with Reflux or the flux pattern, start reading [here](https://github.com/reflux/refluxjs) to see how it will make your life better-er.
+Check out the full [polymer-funky-flux](https://github.com/devinivy/polymer-funky-flux) demo or learn to use Funk by walking through this commented code!  If you're unfamiliar with Reflux or the flux pattern, start reading [here](https://github.com/reflux/refluxjs) to see how it will make your life better-er.
 
 #### `view.html`
 ```html
