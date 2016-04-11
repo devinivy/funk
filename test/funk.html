@@ -158,6 +158,20 @@
             });
           });
 
+          test('deriveDynList() derives a dynamic list from a collection, linking paths.', function(done) {
+
+            store.async(function() {
+
+              store.deriveDynList('dynListFromColl', 'collection', '_dynListFromColl');
+              store.set('_dynListFromColl', [1, 3, 4, 5]);
+              store.splice('_dynListFromColl', 1, 2, 2);
+              store.set('_dynListFromColl', []);
+              store.push('_dynListFromColl', 4);
+
+              done();
+            });
+          });
+
           test('arrayToCollection() helper turns an array into a id-indexed object by default.', function(done) {
 
             var numberArray = [

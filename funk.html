@@ -173,6 +173,37 @@ var Funk = Funk || {};
     },
 
     /**
+     *
+     */
+    deriveDynList: function(prop, collection, dyn) {
+
+      var self = this;
+      var changedEvent = Polymer.CaseMap.camelToDashCase(dyn) + '-changed';
+      var changedListener = function(e) {
+
+        //console.log(JSON.parse(JSON.stringify(e.detail)));
+        if (e.detail.path === dyn + '.splices') {
+
+          var splices = e.detail.value.indexSplices;
+
+          splices.forEach(function (splice) {
+
+          });
+
+        }
+        else if (e.detail.path === dyn) {
+          self.deriveList(prop, collection, self[dyn]);
+        }
+
+      };
+
+      this.deriveList(prop, collection, this[dyn]);
+      this.addEventListener(changedEvent, changedListener);
+
+      //changedListener();
+    },
+
+    /**
      * Converts an array of the format `[{id: 1}, {id: 38}]`
      * to an object of the format `{ 1: { id: 1 }, 38: { id: 38 } }`.
      *
