@@ -178,29 +178,62 @@ var Funk = Funk || {};
     deriveDynList: function(prop, collection, dyn) {
 
       var self = this;
+
       var changedEvent = Polymer.CaseMap.camelToDashCase(dyn) + '-changed';
       var changedListener = function(e) {
 
-        //console.log(JSON.parse(JSON.stringify(e.detail)));
+        var dynIds = self.get(dyn);
+
+        // Complete reset
+        if (!e.detail.path) {
+          return self.deriveList(prop, collection, dynIds);
+        }
+
         if (e.detail.path === dyn + '.splices') {
 
           var splices = e.detail.value.indexSplices;
 
-          splices.forEach(function (splice) {
+          if (!splices.length) {
+            return;
+          }
 
+          // Currently cannot apply multiple splices one at a time,
+          // see Polymer/polymer#3578
+          if (splices.length > 1) {
+            return self.deriveList(prop, collection, dynIds);
+          }
+
+          var start = splices[0].index;
+          var numAdded = splices[0].addedCount;
+          var numRemoved = splices[0].removed.length;
+          var propValue = this.get(prop);
+          var addedObjs = dynIds.slice(start, start + numAdded).map(function(id) {
+            return self.get([collection, id]);
           });
 
-        }
-        else if (e.detail.path === dyn) {
-          self.deriveList(prop, collection, self[dyn]);
+          self.splice.apply(self, [prop, start, numRemoved].concat(addedObjs));
+
+          // Link as few paths as necessary
+
+          var end = (numAdded === numRemoved) ? start + numAdded : propValue.length;
+          for (var i = start; i < end; ++i) {
+            self.linkPaths(prop + '.#' + i, collection + '.' + dynIds[i]);
+          }
+
+          // Remove vestigial links
+
+          var propLength = propValue.length;
+          var deadTail = numRemoved - numAdded;
+          for (var j = propLength; j < propLength + deadTail; ++j) {
+            self.unlinkPaths(prop + '.#' + j);
+          }
+
         }
 
       };
 
-      this.deriveList(prop, collection, this[dyn]);
+      this.deriveList(prop, collection, this.get(dyn) || []);
       this.addEventListener(changedEvent, changedListener);
-
-      //changedListener();
     },
 
     /**
