@@ -139,7 +139,7 @@ Funk.CollectionBehavior = {
      */
     deriveItem: function(prop, collection, id) {
 
-      this.set(prop, this[collection][id]);
+      this.set(prop, this.get([collection, id]));
 
       // Implicitly unlinks any previously linked paths
       this.linkPaths(prop, collection + '.' + id);
@@ -175,7 +175,7 @@ Funk.CollectionBehavior = {
       var id;
       for (var j = 0; j < ids.length; j++) {
         id = ids[j];
-        list.push(this[collection][id]);
+        list.push(this.get([collection, id]));
         this.linkPaths(prop + '.#' + j, collection + '.' + id);
       }
 
