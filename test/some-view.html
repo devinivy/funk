@@ -32,6 +32,11 @@
       numberList: {
         type: Array,
         computed: '_mirror(state.some.listFromColl)'
+      },
+
+      dynNumberList: {
+        type: Array,
+        computed: '_mirrorDyn(state.some.dynListFromColl.splices)'
       }
 
     },
@@ -43,6 +48,14 @@
       }
 
       return a;
+    },
+
+    _mirrorDyn: function(splices) {
+
+      return (this.get('state.some.dynListFromColl') || [])
+      .map(function(dynItem) {
+        return dynItem.val;
+      });
     }
 
   });

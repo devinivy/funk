@@ -107,7 +107,18 @@ var Funk = Funk || {};
           }
         }
       });
-    },
+    }
+
+  };
+
+
+  /**
+  TODO
+
+  @polymerBehavior
+  @demo demo/index.html Funk.CollectionBehavior
+  */
+Funk.CollectionBehavior = {
 
     /**
      * A collection is an id-keyed object of the form,
@@ -179,14 +190,22 @@ var Funk = Funk || {};
 
       var self = this;
 
+      // Ensure the dynamic ids list is notifying,
+      // hopefully only until Polymer/polymer#3460
+      if (dyn.indexOf('.') === -1 && !this.getPropertyInfo(dyn).notify) {
+        throw new Error('Property "' + dyn + '" of store "' +
+                        this.storeName + '" must be notifying ' +
+                        'in order to be used as a dynamic list.');
+      }
+
       var changedEvent = Polymer.CaseMap.camelToDashCase(dyn) + '-changed';
       var changedListener = function(e) {
 
-        var dynIds = self.get(dyn);
+        var dynIds = this.get(dyn);
 
         // Complete reset
         if (!e.detail.path) {
-          return self.deriveList(prop, collection, dynIds);
+          return this.deriveList(prop, collection, dynIds);
         }
 
         if (e.detail.path === dyn + '.splices') {
@@ -200,7 +219,7 @@ var Funk = Funk || {};
           // Currently cannot apply multiple splices one at a time,
           // see Polymer/polymer#3578
           if (splices.length > 1) {
-            return self.deriveList(prop, collection, dynIds);
+            return this.deriveList(prop, collection, dynIds);
           }
 
           var start = splices[0].index;
@@ -211,13 +230,14 @@ var Funk = Funk || {};
             return self.get([collection, id]);
           });
 
-          self.splice.apply(self, [prop, start, numRemoved].concat(addedObjs));
+          // Make the actual splice!
+          this.splice.apply(this, [prop, start, numRemoved].concat(addedObjs));
 
           // Link as few paths as necessary
 
           var end = (numAdded === numRemoved) ? start + numAdded : propValue.length;
           for (var i = start; i < end; ++i) {
-            self.linkPaths(prop + '.#' + i, collection + '.' + dynIds[i]);
+            this.linkPaths(prop + '.#' + i, collection + '.' + dynIds[i]);
           }
 
           // Remove vestigial links
@@ -225,7 +245,7 @@ var Funk = Funk || {};
           var propLength = propValue.length;
           var deadTail = numRemoved - numAdded;
           for (var j = propLength; j < propLength + deadTail; ++j) {
-            self.unlinkPaths(prop + '.#' + j);
+            this.unlinkPaths(prop + '.#' + j);
           }
 
         }
@@ -263,6 +283,7 @@ var Funk = Funk || {};
   Funk.StoreBehavior = [
     YarnBehaviors.StateBehavior,
     Reflux.ListenerMethods,
+    Funk.CollectionBehavior,
     Funk.StoreBehaviorImpl
   ];
 
