@@ -19,7 +19,7 @@
   },
   "main": "funk.html",
   "dependencies": {
-    "polymer": "Polymer/polymer#~1.2.0",
+    "polymer": "Polymer/polymer#^1.2.0",
     "yarn-state-behavior": "yarn-co/yarn-state-behavior#~0.3.0"
   },
   "devDependencies": {
