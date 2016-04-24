@@ -1,0 +1,64 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../funk.html">
+
+<script>
+(function() {
+
+  Polymer({
+
+    is: 'some-view',
+
+    behaviors: [
+      Funk.ViewBehavior
+    ],
+
+    properties: {
+
+      finger: {
+        type: String,
+        computed: '_mirror(state.some.simple)'
+      },
+
+      toeCount: {
+        type: Number,
+        computed: '_mirror(state.some.arr.length, 0)'
+      },
+
+      numberInfo: {
+        type: String,
+        computed: '_mirror(state.some.itemFromColl.val)'
+      },
+
+      numberList: {
+        type: Array,
+        computed: '_mirror(state.some.listFromColl)'
+      },
+
+      dynNumberList: {
+        type: Array,
+        computed: '_mirrorDyn(state.some.dynListFromColl.splices)'
+      }
+
+    },
+
+    _mirror: function(a, def) {
+
+      if (typeof a === 'undefined' && typeof def !== 'undefined') {
+        return def;
+      }
+
+      return a;
+    },
+
+    _mirrorDyn: function(splices) {
+
+      return (this.get('state.some.dynListFromColl') || [])
+      .map(function(dynItem) {
+        return dynItem.val;
+      });
+    }
+
+  });
+
+})();
+</script>

@@ -1,0 +1,42 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../funk.html">
+<link rel="import" href="actions.html">
+
+<script>
+Polymer({
+
+  is: 'my-store',
+
+  // The StoreBehavior makes this element act
+  // like a Reflux store... but in Polymer-land.
+  behaviors: [
+    Funk.StoreBehavior
+  ],
+
+  properties: {
+
+    storeName: {
+      type: String,
+      value: 'myStore' // Name of the store as found on `state.myStore`
+    },
+
+    finger: {
+      type: String,
+      value: '',    // Initial finger state
+      notify: true  // Indicates that this prop is part of app state
+    }
+
+  },
+
+  // Subscribe to actions!
+  // This works identically to Reflux's "listenables"
+  funkListenables: MyActions,
+
+  onSmellFinger: function(whichFinger) {
+    // Setting finger here will notify
+    // state.myStore.finger across your app
+    this.finger = whichFinger;
+  }
+
+});
+</script>

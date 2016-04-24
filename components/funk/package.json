@@ -1,0 +1,23 @@
+{
+  "name": "funk",
+  "version": "1.0.0",
+  "description": "Polymer high-fives Reflux",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devinivy/funk.git"
+  },
+  "author": "Devin Ivy <devin@bigroomstudios.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devinivy/funk/issues"
+  },
+  "homepage": "https://github.com/devinivy/funk#readme",
+  "scripts": {
+    "build": "browserify -d -r reflux-core -o reflux-core.js",
+    "release": "browserify -r reflux-core -o reflux-core.js"
+  },
+  "devDependencies": {
+    "reflux-core": "0.3.0",
+    "browserify": "13.x.x"
+  }
+}

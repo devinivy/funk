@@ -1,0 +1,112 @@
+<html>
+  <head>
+
+    <title>yarn-state-behavior tests</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../test-fixture/test-fixture-mocha.js"></script>
+
+    <link rel="import" href="../../test-fixture/test-fixture.html">
+    <link rel="import" href="test-state-from.html">
+    <link rel="import" href="test-state-to.html">
+
+  </head>
+  <body>
+
+    <test-fixture id="simple">
+      <template>
+        <test-state-from></test-state-from>
+        <test-state-to></test-state-to>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('<yarn-state-behavior>', function() {
+
+        suite('when setting state', function() {
+
+          var states;
+          var from;
+          var to;
+
+          setup(function() {
+
+            states = fixture('simple');
+            from = states[0];
+            to = states[1];
+          });
+
+          test('it is shared across elements.', function(done) {
+
+            from.set('state.prop', 'shared');
+
+            assert.equal(from.state.prop, to.state.prop);
+            done();
+          });
+
+          test('other elements can observe first-level state properties.', function(done) {
+
+            from.set('state.prop', 'first-level');
+
+            assert.equal(to.state.prop, 'first-level');
+            assert.equal(to.seenState, 'first-level');
+            done();
+          });
+
+          test('other elements can observe deep state properties.', function(done) {
+
+            from.set('state.deep', {});
+            from.set('state.deep.prop', 'deep');
+
+            assert.equal(to.state.deep.prop, 'deep');
+            assert.equal(to.seenState, 'deep');
+            done();
+          });
+
+          test('other elements can observe specific array elements.', function(done) {
+
+            from.set('state.arr', ['init']);
+            from.set('state.arr.#0', 'arr-specific');
+
+            assert.equal(to.state.arr[0], 'arr-specific');
+            assert.equal(to.seenState, 'arr-specific');
+            done();
+          });
+
+          test('other elements can observe array splices.', function(done) {
+
+            from.set('state.arr', []);
+            from.push('state.arr', 'arr-splice');
+
+            assert.equal(to.state.arr[0], 'arr-splice');
+            assert.equal(typeof to.seenStateSplices, 'object');
+            assert.equal((to.seenStateSplices.indexSplices || []).length, 1);
+            assert.equal(to.seenStateSplices.indexSplices[0].index, 0);
+            assert.equal(to.seenStateSplices.indexSplices[0].addedCount, 1);
+            assert.equal(to.seenStateSplices.indexSplices[0].removed.length, 0);
+            done();
+          });
+
+          test('the shared object reference is read-only.', function(done) {
+
+            assert.throw(function() {
+              from.set('state', {});
+            });
+
+            done();
+          });
+
+        });
+
+      });
+
+    </script>
+
+  </body>
+</html>

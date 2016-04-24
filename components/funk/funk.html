@@ -1,0 +1,313 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../yarn-state-behavior/yarn-state-behavior.html">
+<link rel="import" href="reflux-core.html">
+
+<script>
+var Funk = Funk || {};
+
+(function() {
+
+  var Reflux = Funk.Reflux = require('reflux-core');
+
+  /**
+  This behavior turns a Polymer component into a store that can subscribe to Reflux actions and publish state changes to your Polymer views.
+
+  Each property with `{ notify: true }` is mirrored on to `state[storeName]`, which is available to any of your views that have the `Funk.ViewBehavior` (simply an alias for [`YarnBehaviors.StateBehavior`](https://github.com/yarn-co/yarn-state-behavior)).
+
+  Not only is the store mirrored on to `state[storeName]`, but data-binding is also perfectly preserved.  So your views can subscribe to changes to your stores using all the familiar means: computed properties, observers, and one-way DOM-binding (i.e. `[[state.myStore.someProp]]`), etc.
+
+  _**Note:** Be sure not to use two-way binding with `state` to keep that funky, fluxy one-directional data-flow!_
+
+  Aside from providing several helper methods, this behavior also imparts all of Reflux's listening methods to your store component, including `hasListener()`, `listenToMany()`, `validateListening()`, `listenTo()`, `stopListeningTo()`, `stopListeningToAll()`, `joinTrailing()`, `joinLeading()`, `joinConcat()`, and `joinStrict()`.
+
+  A note on timing: stores may be initialized all the way through the `attached()` Polymer lifecycle hook– `state[myStore]` comes into effect _directly after_ the `attached()` hook (using microtask timing).  This is consistent with the timing with which Polymer's computed properties resolve.
+
+  @polymerBehavior Funk.StoreBehavior
+  @demo demo/index.html
+  */
+  Funk.StoreBehaviorImpl = {
+
+    properties: {
+
+      /**
+       * The name of the store.
+       * This name will be used as the key that gets placed on
+       * `state` to reference the store, e.g. `state[storeName]`
+       * can be used throughout your views to reference this
+       * store (on all `Funk.ViewBehavior` elements).
+       */
+      storeName: {
+        type: String,
+        readOnly: true
+      },
+
+      /**
+       * Behaves identically to Reflux's [listenables](https://github.com/reflux/refluxjs#the-listenables-shorthand).
+       */
+      funkListenables: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      }
+
+    },
+
+    ready: function() {
+
+      if (!this.storeName) {
+        throw new Error('Store must have a name.');
+      }
+
+      // Hook-up listenables
+
+      var listenables = [].concat(this.funkListenables);
+      for (var i = 0; i < listenables.length; i++) {
+        this.listenToMany(listenables[i]);
+      }
+    },
+
+    attached: function() {
+
+      // Wrap binding logic in async to allow computed bindings, etc. to settle
+      this.async(function() {
+
+        // Init storage spot
+        this.state[this.storeName] = {};
+
+        // Link store names to state
+
+        var notifies;
+        var propName;
+        var properties = Object.keys(this.properties);
+        for (var i = 0; i < properties.length; i++) {
+
+          propName = properties[i];
+          notifies = this.properties[propName].notify;
+
+          if (propName !== 'storeName' && propName !== 'state' && notifies) {
+
+            // Set state and link paths.  Path linking takes care of passing
+            // along deep changes, but not shallow ones.
+            // E.g. passes along `someProp.length` but not `someProp`
+            this.set(['state', this.storeName, propName], this[propName]);
+            this.linkPaths('state.' + this.storeName + '.' + propName, propName);
+
+            // Now take care of shallow changes by simply listening, ignoring
+            // changes to deep paths.
+            var changedEvent = Polymer.CaseMap.camelToDashCase(propName) + '-changed';
+            var changedListener = function(prop, e) {
+
+              if (!e.detail.path) {
+                this.set(['state', this.storeName, prop], this[prop]);
+              }
+            };
+
+            this.addEventListener(changedEvent, changedListener.bind(this, propName));
+          }
+        }
+      });
+    }
+
+  };
+
+
+  /**
+  This behavior provides utilities to work with Funk collections.
+  A collection is simply an id-keyed object of the form,
+  `{ 22: {...}, 144: {...}, 3: {...} }`.
+
+  @polymerBehavior Funk.CollectionBehavior
+  @demo demo/index.html
+  */
+Funk.CollectionBehavior = {
+
+    /**
+     * If you'd like a property to mirror one of the items
+     * in a collection, you would use `deriveItem()`.
+     *
+     * Ex.
+     * ```js
+     * this.collection = { 22: {...}, 144: {...}, 3: { val: 'fluxy!' } };
+     * this.deriveItem('someItem', 'collection', 3);
+     * this.someItem; // { val: 'fluxy!' }
+     *
+     * // This will notify anyone observing someItem
+     * this.set('collection.3.val', 'funky!');
+     * this.someItem; // { val: 'funky!' }
+     * ```
+     */
+    deriveItem: function(prop, collection, id) {
+
+      this.set(prop, this.get([collection, id]));
+
+      // Implicitly unlinks any previously linked paths
+      this.linkPaths(prop, collection + '.' + id);
+    },
+
+    /**
+     * If you'd like a property to mirror a fixed list of the
+     * items in a collection as an array, you would use `deriveList()`.
+     *
+     * Ex.
+     * ```js
+     * this.collection = { 22: {...}, 144: { val: 'gross!' }, 3: { val: 'fluxy!' } };
+     * this.deriveList('someList', 'collection', [144, 3]);
+     * this.someList; // [{ val: 'gross!' }, { val: 'fluxy!' }]
+     *
+     * // This will notify anyone observing someList.#0
+     * this.set('collection.144.val', 'mmm!');
+     * this.someList; // [{ val: 'mmm!' }, { val: 'fluxy!' }]
+     * ```
+     */
+    deriveList: function(prop, collection, ids) {
+
+      // Unlink existing paths
+      var currentList = this.get(prop) || [];
+      for (var i = 0; i < currentList.length; i++) {
+        this.unlinkPaths(prop + '.#' + i);
+      }
+
+      // Create new list, linking paths
+      var list = [];
+      var id;
+      for (var j = 0; j < ids.length; j++) {
+        id = ids[j];
+        list.push(this.get([collection, id]));
+        this.linkPaths(prop + '.#' + j, collection + '.' + id);
+      }
+
+      // Finally set list
+      this.set(prop, list);
+    },
+
+    /**
+     * If you'd like a property to mirror a dynamic list of the
+     * items in a collection as an array, you would use `deriveDynList()`.
+     *
+     * The dynamic list `dyn` must be a notifying property.
+     *
+     * Ex.
+     * ```js
+     * this.friendIds = [3, 5, 8, 13];
+     * this.deriveDynList('friends', 'usersCollection', 'friendIds');
+     * // Notifies friends.splices
+     * this.push('friendIds', 21);
+     * // Notifies friends.#4.name
+     * this.set(['usersCollection', 21, 'name'], 'Copernicus');
+     * ```
+     */
+    deriveDynList: function(prop, collection, dyn) {
+
+      var self = this;
+
+      // Ensure the dynamic ids list is notifying,
+      // hopefully only until Polymer/polymer#3460
+      if (dyn.indexOf('.') === -1 && !this.getPropertyInfo(dyn).notify) {
+        throw new Error('Property "' + dyn + '" must be notifying ' +
+                        'in order to be used as a dynamic list.');
+      }
+
+      var changedEvent = Polymer.CaseMap.camelToDashCase(dyn) + '-changed';
+      var changedListener = function(e) {
+
+        var dynIds = this.get(dyn);
+
+        // Complete reset
+        if (!e.detail.path) {
+          return this.deriveList(prop, collection, dynIds);
+        }
+
+        if (e.detail.path === dyn + '.splices') {
+
+          var splices = e.detail.value.indexSplices;
+
+          if (!splices.length) {
+            return;
+          }
+
+          // Currently cannot apply multiple splices one at a time,
+          // see Polymer/polymer#3578
+          if (splices.length > 1) {
+            return this.deriveList(prop, collection, dynIds);
+          }
+
+          var start = splices[0].index;
+          var numAdded = splices[0].addedCount;
+          var numRemoved = splices[0].removed.length;
+          var propValue = this.get(prop);
+          var addedObjs = dynIds.slice(start, start + numAdded).map(function(id) {
+            return self.get([collection, id]);
+          });
+
+          // Make the actual splice!
+          this.splice.apply(this, [prop, start, numRemoved].concat(addedObjs));
+
+          // Link as few paths as necessary
+
+          var end = (numAdded === numRemoved) ? start + numAdded : propValue.length;
+          for (var i = start; i < end; ++i) {
+            this.linkPaths(prop + '.#' + i, collection + '.' + dynIds[i]);
+          }
+
+          // Remove vestigial links
+
+          var propLength = propValue.length;
+          var deadTail = numRemoved - numAdded;
+          for (var j = propLength; j < propLength + deadTail; ++j) {
+            this.unlinkPaths(prop + '.#' + j);
+          }
+
+        }
+
+      };
+
+      this.deriveList(prop, collection, this.get(dyn) || []);
+      this.addEventListener(changedEvent, changedListener);
+    },
+
+    /**
+     * Converts an array of the format `[{ id: 1 }, { id: 38 }]`
+     * to an object of the format `{ 1: { id: 1 }, 38: { id: 38 } }`
+     * (a Funk collection).
+     *
+     * This is intended to be used to facilitate collections
+     * used by `deriveItem()` and `deriveList()`.
+     *
+     * The second argument `keyName` may override the keying field-name,
+     * and defaults to `'id'`.
+     */
+    arrayToCollection: function(list, keyName) {
+
+      keyName = keyName || 'id';
+
+      var obj = {};
+      for (var i = 0; i < list.length; i++) {
+        obj[list[i][keyName]] = list[i];
+      }
+
+      return obj;
+    }
+
+  };
+
+  /** @polymerBehavior */
+  Funk.StoreBehavior = [
+    YarnBehaviors.StateBehavior,
+    Reflux.ListenerMethods,
+    Funk.CollectionBehavior,
+    Funk.StoreBehaviorImpl
+  ];
+
+  /**
+  An alias of [YarnBehaviors.StateBehavior](https://github.com/yarn-co/yarn-state-behavior)
+
+  @polymerBehavior Funk.ViewBehavior
+  @demo demo/index.html
+  */
+  Funk.ViewBehavior = [
+    YarnBehaviors.StateBehavior
+  ];
+
+})();
+</script>

@@ -1,0 +1,354 @@
+<html>
+  <head>
+
+    <title>funk tests</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../test-fixture/test-fixture-mocha.js"></script>
+
+    <link rel="import" href="../../test-fixture/test-fixture.html">
+
+    <link rel="import" href="../reflux-core.html">
+    <link rel="import" href="../funk.html">
+    <link rel="import" href="some-store.html">
+    <link rel="import" href="some-view.html">
+    <link rel="import" href="some-actions.html">
+
+  </head>
+  <body>
+
+    <test-fixture id="simple">
+      <template>
+        <some-store></some-store>
+        <some-view></some-view>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('Funk', function() {
+
+        suite('StoreBehavior', function() {
+
+          var funk;
+          var store;
+          var view;
+
+          setup(function() {
+
+            funk = fixture('simple');
+            store = funk[0];
+            view = funk[1];
+          });
+
+          test('propagates state with predictable timing.', function(done) {
+
+            // At this point the components are attached
+
+            expect(store.simple).to.equal('init');
+            expect(view.finger).to.equal(undefined);
+
+            store.simple = 'thumb';
+
+            expect(store.simple).to.equal('thumb');
+            expect(view.finger).to.equal(undefined);
+
+            store.async(function() {
+
+              // Now they're dom-readied
+
+              expect(store.simple).to.equal('thumb');
+              expect(view.finger).to.equal('thumb');
+
+              store.simple = 'pinky';
+
+              expect(store.simple).to.equal('pinky');
+              expect(view.finger).to.equal('pinky');
+
+              done();
+            });
+          });
+
+          test('propagates complex array state.', function(done) {
+
+            store.async(function() {
+
+              expect(view.toeCount).to.equal(0);
+
+              store.push('arr', 'little-piggy');
+              expect(view.toeCount).to.equal(1);
+
+              store.push('arr', 'middle-piggy');
+              store.push('arr', 'big-piggy');
+              expect(view.toeCount).to.equal(3);
+
+              store.splice('arr', 1, 1);
+              expect(view.toeCount).to.equal(2);
+
+              expect(view.state.some.arr.length).to.equal(2);
+              expect(view.state.some.arr[0]).to.equal('little-piggy');
+              expect(view.state.some.arr[1]).to.equal('big-piggy');
+
+              done();
+            });
+          });
+
+          test('does not propagate non-notifying properties.', function(done) {
+
+            store.async(function() {
+
+              expect(view.state.some.private).to.equal(undefined);
+              expect(store.private).to.equal('private');
+
+              store.private = 'secret-finger';
+
+              expect(view.state.some.private).to.equal(undefined);
+              expect(store.private).to.equal('secret-finger');
+
+              done();
+            });
+          });
+
+          test('wires-up listenable actions before attached.', function(done) {
+
+            expect(store.simple).to.equal('init');
+            SomeActions.smellFinger('thumb');
+            expect(store.simple).to.equal('thumb');
+
+            done();
+          });
+
+          test('deriveItem() derives an item from a collection, linking paths.', function(done) {
+
+            store.async(function() {
+
+              expect(view.numberInfo).to.equal(undefined);
+
+              store.deriveItem('itemFromColl', 'collection', 1);
+              expect(view.numberInfo).to.equal('one');
+
+              store.set('collection.1.val', 'won');
+              expect(view.numberInfo).to.equal('won');
+
+              done();
+            });
+          });
+
+          test('deriveList() derives a list from a collection, linking paths.', function(done) {
+
+            store.async(function() {
+
+              expect(view.numberList).to.equal(undefined);
+
+              store.deriveList('listFromColl', 'collection', [1, 4, 5]);
+              expect(view.numberList.length).to.equal(3);
+              expect(view.numberList[0].val).to.equal('one');
+              expect(view.numberList[1].val).to.equal('four');
+              expect(view.numberList[2].val).to.equal('five');
+
+              store.set('collection.4.val', 'fore');
+              expect(view.numberList[1].val).to.equal('fore');
+
+              done();
+            });
+          });
+
+          test('deriveDynList() derives a dynamic list from a collection, linking paths.', function(done) {
+
+            var getLinked = function() {
+              return Object.keys(store._boundPaths)
+              .filter(function(path) {
+                return (path.indexOf('dynListFromColl.') === 0);
+              })
+              .reduce(function(result, path) {
+                result[path] = store._boundPaths[path];
+                return result;
+              }, {});
+            };
+
+            store.async(function() {
+
+              // Start empty
+              expect(view.dynNumberList).to.deep.equal([]);
+              expect(getLinked()).to.deep.equal({});
+
+              // Derive the list
+              store.deriveDynList('dynListFromColl', 'collection', '_dynListIds');
+
+              // Initialize with set
+              store.set('_dynListIds', [1, 3, 4, 5]);
+              expect(view.dynNumberList).to.deep.equal([
+                'one', 'three', 'four', 'five'
+              ]);
+              expect(getLinked()).to.deep.equal({
+                'dynListFromColl.#0': "collection.1",
+                'dynListFromColl.#1': "collection.3",
+                'dynListFromColl.#2': "collection.4",
+                'dynListFromColl.#3': "collection.5"
+              });
+
+              // Remove more than add
+              store.splice('_dynListIds', 1, 2, 2);
+              expect(view.dynNumberList).to.deep.equal([
+                'one', 'two', 'five'
+              ]);
+              expect(getLinked()).to.deep.equal({
+                'dynListFromColl.#0': "collection.1",
+                'dynListFromColl.#1': "collection.2",
+                'dynListFromColl.#2': "collection.5"
+              });
+
+              // Remove fewer than add
+              store.splice('_dynListIds', 1, 1, 4, 3);
+              expect(view.dynNumberList).to.deep.equal([
+                'one', 'four', 'three', 'five'
+              ]);
+              expect(getLinked()).to.deep.equal({
+                'dynListFromColl.#0': "collection.1",
+                'dynListFromColl.#1': "collection.4",
+                'dynListFromColl.#2': "collection.3",
+                'dynListFromColl.#3': "collection.5"
+              });
+
+              // Remove same as add
+              store.splice('_dynListIds', 1, 2, 3, 4);
+              expect(view.dynNumberList).to.deep.equal([
+                'one', 'three', 'four', 'five'
+              ]);
+              expect(getLinked()).to.deep.equal({
+                'dynListFromColl.#0': "collection.1",
+                'dynListFromColl.#1': "collection.3",
+                'dynListFromColl.#2': "collection.4",
+                'dynListFromColl.#3': "collection.5"
+              });
+
+              // Set empty
+              store.set('_dynListIds', []);
+              expect(view.dynNumberList).to.deep.equal([]);
+              expect(getLinked()).to.deep.equal({});
+
+              // Push (common use-case)
+              store.push('_dynListIds', 4);
+              expect(view.dynNumberList).to.deep.equal(['four']);
+              expect(getLinked()).to.deep.equal({
+                'dynListFromColl.#0': "collection.4"
+              });
+
+              done();
+            });
+          });
+
+          test('deriveDynList() throws when using a non-notifying dynamic list.', function(done) {
+
+            store.async(function() {
+
+              expect(function() {
+                store.deriveDynList('dynListFromColl', 'collection', '_badDynListIds');
+              }).to.throw('Property "_badDynListIds" must be notifying in order to be used as a dynamic list.');
+
+              done();
+            });
+          });
+
+          test('arrayToCollection() helper turns an array into a id-indexed object by default.', function(done) {
+
+            var numberArray = [
+              { id: 1, val: 'one' },
+              { id: 2, val: 'two' },
+              { id: 3, val: 'three' }
+            ];
+
+            var numberCollection = store.arrayToCollection(numberArray);
+
+            expect(numberCollection).to.be.instanceof(Object);
+            expect(Object.keys(numberCollection).length).to.equal(3);
+            expect(numberCollection[1]).to.equal(numberArray[0]);
+            expect(numberCollection[2]).to.equal(numberArray[1]);
+            expect(numberCollection[3]).to.equal(numberArray[2]);
+
+            done();
+          });
+
+          test('arrayToCollection() helper turns an array into a <key>-indexed object.', function(done) {
+
+            var numberArray = [
+              { id: 1, other: 11, val: 'one' },
+              { id: 2, other: 22, val: 'two' },
+              { id: 3, other: 33, val: 'three' }
+            ];
+
+            var numberCollection = store.arrayToCollection(numberArray, 'other');
+
+            expect(numberCollection).to.be.instanceof(Object);
+            expect(Object.keys(numberCollection).length).to.equal(3);
+            expect(numberCollection[11]).to.equal(numberArray[0]);
+            expect(numberCollection[22]).to.equal(numberArray[1]);
+            expect(numberCollection[33]).to.equal(numberArray[2]);
+
+            done();
+          });
+
+          test('throws when creating a store without a name.', function(done) {
+
+            expect(function() {
+
+              var ready = Funk.StoreBehaviorImpl.ready.bind({
+                storeName: null
+              });
+
+              ready();
+
+            }).to.throw('Store must have a name.');
+
+            done();
+          });
+
+        });
+
+        suite('ViewBehavior', function() {
+
+          test('is an alias for YarnBehaviors.StateBehavior.', function(done) {
+
+            expect(Funk.ViewBehavior).to.be.instanceof(Array);
+            expect(Funk.ViewBehavior.length).to.equal(1);
+            expect(Funk.ViewBehavior[0]).to.equal(YarnBehaviors.StateBehavior);
+
+            done();
+          });
+
+        });
+
+        suite('CollectionBehavior', function() {
+
+          test('exists and is used by StoreBehavior.', function(done) {
+
+            expect(Funk.CollectionBehavior).to.be.instanceof(Object);
+            expect(Funk.StoreBehavior).to.contain(Funk.CollectionBehavior);
+
+            done();
+          });
+
+        });
+
+        suite('Reflux', function() {
+
+          test('is an alias for reflux-core.', function(done) {
+
+            expect(Funk.Reflux).to.equal(require('reflux-core'));
+
+            done();
+          });
+
+        });
+
+      });
+
+    </script>
+
+  </body>
+</html>

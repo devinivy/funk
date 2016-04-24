@@ -1,0 +1,41 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../funk.html">
+<link rel="import" href="actions.html">
+
+<dom-module id="my-view">
+  <template>
+    <!-- Look, a binding from myStore! -->
+    <h1>Finger length: [[_length(state.myStore.finger)]]</h1>
+    <ul on-click="_clickedFinger">
+      <li>ring</li>
+      <li>thumb</li>
+      <li>pinky</li>
+      <li>middle</li>
+      <li>pointer</li>
+    </ul>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+
+  is: 'my-view',
+
+  // Use the ViewBehavior to receive state changes from myStore
+  behaviors: [
+    Funk.ViewBehavior
+  ],
+
+  // Put MyActions to good use and give a whiff!
+  _clickedFinger: function(e) {
+    if (e.path[0].tagName === 'LI') {
+      MyActions.smellFinger(e.path[0].innerHTML);
+    }
+  },
+
+  _length: function(str) {
+    return (str || '').length;
+  }
+
+});
+</script>

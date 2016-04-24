@@ -1,0 +1,41 @@
+{
+  "name": "funk",
+  "keywords": [
+    "web-components",
+    "polymer",
+    "flux",
+    "reflux",
+    "state"
+  ],
+  "license": "MIT",
+  "description": "Polymer high-fives Reflux",
+  "authors": [
+    "Devin Ivy <devin@bigroomstudios.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/devinivy/funk.git"
+  },
+  "main": "funk.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.2.0",
+    "yarn-state-behavior": "yarn-co/yarn-state-behavior#~0.3.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#^1.0.0",
+    "test-fixture": "polymerelements/test-fixture#^1.0.0",
+    "web-component-tester": "*",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "homepage": "https://github.com/devinivy/funk",
+  "_release": "9cd2e81cae",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "9cd2e81cae91e80a379534cb0aeb41389e838a46"
+  },
+  "_source": "git@github.com:devinivy/funk.git",
+  "_target": "master",
+  "_originalSource": "git@github.com:devinivy/funk",
+  "_direct": true
+}

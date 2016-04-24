@@ -1,0 +1,102 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<script>
+var YarnBehaviors = YarnBehaviors || {};
+
+(function() {
+
+  var internals = {
+    instances: [],
+    state: {}
+  };
+
+  /**
+  This behavior should be used to share app state across elements via the `state` property.  The behavior ensures that path-notifying calls (e.g. `set()`, `splice()`, etc.) involving the `state` object or its children are delegated to all elements with this behavior, so observers should work as expected.
+
+  @polymerBehavior YarnBehaviors.StateBehavior
+  */
+  YarnBehaviors.StateBehavior = {
+
+    properties: {
+
+      /**
+       * An object shared among all elements with this behavior.
+       */
+      state: {
+        type: Object,
+        notify: true,
+        readOnly: true,
+        value: internals.state
+      }
+
+    },
+
+    ready: function() {
+
+      // Protect from state behavior being mixed-in with itself
+      // see Polymer/polymer#1894
+
+      if (this._usingStateBehavior) {
+        return;
+      }
+
+      this._usingStateBehavior = true;
+
+
+      // Patch _notifyPath to delegate to all instances.
+      // This is slightly dirty, but by far most efficient
+      // code-wise and perf-wise.
+
+      if (typeof this._notifyPath !== 'function') {
+        throw new Error('Polymer version appears to be incompatible with StateBehavior.');
+      }
+
+      var origNotifyPath = this._notifyPath;
+
+      this._notifyPath = function() {
+
+        // Call on self
+        origNotifyPath.apply(this, arguments);
+
+        // Call on all other instances if necessary
+        if (arguments[0].split('.')[0] === 'state') {
+          this._invokeInstances(origNotifyPath, arguments);
+        }
+      };
+
+    },
+
+    attached: function() {
+
+      // Protect from state behavior being mixed-in with itself
+      if (!~internals.instances.indexOf(this)) {
+        internals.instances.push(this);
+      }
+    },
+
+    detached: function() {
+
+      var i = internals.instances.indexOf(this);
+
+      if (i >= 0) {
+        internals.instances.splice(i, 1);
+      }
+    },
+
+    _invokeInstances: function(fn, args) {
+
+      var instances = internals.instances;
+
+      var instance;
+      for (var i = 0; i < instances.length; i++) {
+        instance = instances[i];
+        if (instance !== this) {
+          fn.apply(instance, args);
+        }
+      }
+    }
+
+  };
+
+})();
+</script>

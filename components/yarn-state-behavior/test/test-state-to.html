@@ -1,0 +1,39 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../yarn-state-behavior.html">
+
+<script>
+(function() {
+
+  Polymer({
+
+    is: 'test-state-to',
+
+    behaviors: [
+      YarnBehaviors.StateBehavior
+    ],
+
+    observers: [
+      '_seeState(state.prop)',
+      '_seeState(state.deep.prop)',
+      '_seeState(state.arr.#0)',
+      '_seeStateSplices(state.arr.splices)'
+    ],
+
+    seenState: null,
+    seenStateSplices: null,
+
+    _seeState: function(prop) {
+
+      this.seenState = prop;
+    },
+
+    _seeStateSplices: function(prop) {
+
+      // Capture exact value.  Ignore undefineds.
+      this.seenStateSplices = JSON.parse(JSON.stringify(prop || null));
+    }
+
+  });
+
+})();
+</script>

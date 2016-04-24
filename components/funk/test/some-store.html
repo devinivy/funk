@@ -1,0 +1,100 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../funk.html">
+<link rel="import" href="some-actions.html">
+
+<script>
+(function() {
+
+  Polymer({
+
+    is: 'some-store',
+
+    behaviors: [
+      Funk.StoreBehavior
+    ],
+
+    properties: {
+
+      storeName: {
+        value: 'some'
+      },
+
+      private: {
+        type: String,
+        value: 'private'
+      },
+
+      simple: {
+        type: String,
+        value: 'init',
+        notify: true
+      },
+
+      arr: {
+        type: Array,
+        value: function() {
+          return [];
+        },
+        notify: true
+      },
+
+      obj: {
+        type: Object,
+        value: function() {
+          return {};
+        },
+        notify: true
+      },
+
+      collection: {
+        type: Object,
+        value: function() {
+          return {
+            1: { id: 1, val: 'one' },
+            2: { id: 2, val: 'two' },
+            3: { id: 3, val: 'three' },
+            4: { id: 4, val: 'four' },
+            5: { id: 5, val: 'five' }
+          };
+        },
+        notify: true
+      },
+
+      itemFromColl: {
+        type: Object,
+        notify: true
+      },
+
+      listFromColl: {
+        type: Array,
+        notify: true
+      },
+
+      dynListFromColl: {
+        type: Array,
+        notify: true
+      },
+
+      _dynListIds: {
+        type: Array,
+        notify: true
+      },
+
+      // Bad because non-notifying
+      _badDynListIds: {
+        type: Array
+      }
+
+    },
+
+    funkListenables: SomeActions,
+
+    onSmellFinger: function(whichFinger) {
+
+      this.simple = whichFinger;
+    }
+
+  });
+
+})();
+</script>
