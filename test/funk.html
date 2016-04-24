@@ -249,7 +249,7 @@
 
               expect(function() {
                 store.deriveDynList('dynListFromColl', 'collection', '_badDynListIds');
-              }).to.throw('Property "_badDynListIds" of store "some" must be notifying in order to be used as a dynamic list.');
+              }).to.throw('Property "_badDynListIds" must be notifying in order to be used as a dynamic list.');
 
               done();
             });
@@ -317,6 +317,18 @@
             expect(Funk.ViewBehavior).to.be.instanceof(Array);
             expect(Funk.ViewBehavior.length).to.equal(1);
             expect(Funk.ViewBehavior[0]).to.equal(YarnBehaviors.StateBehavior);
+
+            done();
+          });
+
+        });
+
+        suite('CollectionBehavior', function() {
+
+          test('exists and is used by StoreBehavior.', function(done) {
+
+            expect(Funk.CollectionBehavior).to.be.instanceof(Object);
+            expect(Funk.StoreBehavior).to.contain(Funk.CollectionBehavior);
 
             done();
           });

@@ -12,18 +12,18 @@ var Funk = Funk || {};
   /**
   This behavior turns a Polymer component into a store that can subscribe to Reflux actions and publish state changes to your Polymer views.
 
-  Each property with `{ notify: true }` is mirrored on to `state.[storeName]`, which is available to any of your views that have the `Funk.ViewBehavior` (simply an alias for [`YarnBehaviors.StateBehavior`](https://github.com/yarn-co/yarn-state-behavior)).
+  Each property with `{ notify: true }` is mirrored on to `state[storeName]`, which is available to any of your views that have the `Funk.ViewBehavior` (simply an alias for [`YarnBehaviors.StateBehavior`](https://github.com/yarn-co/yarn-state-behavior)).
 
-  Not only is the store mirrored on to `state.[storeName]`, but data-binding is also perfectly preserved.  So your views can subscribe to changes to your stores using all the familiar means: computed properties, observers, and one-way DOM-binding (i.e. `[[state.myStore.someProp]]`), etc.
+  Not only is the store mirrored on to `state[storeName]`, but data-binding is also perfectly preserved.  So your views can subscribe to changes to your stores using all the familiar means: computed properties, observers, and one-way DOM-binding (i.e. `[[state.myStore.someProp]]`), etc.
 
   _**Note:** Be sure not to use two-way binding with `state` to keep that funky, fluxy one-directional data-flow!_
 
   Aside from providing several helper methods, this behavior also imparts all of Reflux's listening methods to your store component, including `hasListener()`, `listenToMany()`, `validateListening()`, `listenTo()`, `stopListeningTo()`, `stopListeningToAll()`, `joinTrailing()`, `joinLeading()`, `joinConcat()`, and `joinStrict()`.
 
-  A note on timing: stores may be initialized all the way through the `attached()` Polymer lifecycle hook– `state.[myStore]` comes into effect _directly after_ the `attached()` hook (using microtask timing).  This is consistent with the timing with which Polymer's computed properties resolve.
+  A note on timing: stores may be initialized all the way through the `attached()` Polymer lifecycle hook– `state[myStore]` comes into effect _directly after_ the `attached()` hook (using microtask timing).  This is consistent with the timing with which Polymer's computed properties resolve.
 
-  @polymerBehavior
-  @demo demo/index.html Funk.StoreBehavior
+  @polymerBehavior Funk.StoreBehavior
+  @demo demo/index.html
   */
   Funk.StoreBehaviorImpl = {
 
@@ -32,7 +32,7 @@ var Funk = Funk || {};
       /**
        * The name of the store.
        * This name will be used as the key that gets placed on
-       * `state` to reference the store, e.g. `state.[storeName]`
+       * `state` to reference the store, e.g. `state[storeName]`
        * can be used throughout your views to reference this
        * store (on all `Funk.ViewBehavior` elements).
        */
@@ -113,18 +113,18 @@ var Funk = Funk || {};
 
 
   /**
-  TODO
+  This behavior provides utilities to work with Funk collections.
+  A collection is simply an id-keyed object of the form,
+  `{ 22: {...}, 144: {...}, 3: {...} }`.
 
-  @polymerBehavior
-  @demo demo/index.html Funk.CollectionBehavior
+  @polymerBehavior Funk.CollectionBehavior
+  @demo demo/index.html
   */
 Funk.CollectionBehavior = {
 
     /**
-     * A collection is an id-keyed object of the form,
-     * `{ 22: {...}, 144: {...}, 3: {...} }`.  If you'd like
-     * one of your store's properties to mirror one of the
-     * items in a collection, you would use `deriveItem()`.
+     * If you'd like a property to mirror one of the items
+     * in a collection, you would use `deriveItem()`.
      *
      * Ex.
      * ```js
@@ -146,9 +146,7 @@ Funk.CollectionBehavior = {
     },
 
     /**
-     * A collection is an id-keyed object of the form,
-     * `{ 22: {...}, 144: {...}, 3: {...} }`.  If you'd like
-     * one of your store's properties to mirror a group of the
+     * If you'd like a property to mirror a fixed list of the
      * items in a collection as an array, you would use `deriveList()`.
      *
      * Ex.
@@ -184,7 +182,20 @@ Funk.CollectionBehavior = {
     },
 
     /**
+     * If you'd like a property to mirror a dynamic list of the
+     * items in a collection as an array, you would use `deriveDynList()`.
      *
+     * The dynamic list `dyn` must be a notifying property.
+     *
+     * Ex.
+     * ```js
+     * this.friendIds = [3, 5, 8, 13];
+     * this.deriveDynList('friends', 'usersCollection', 'friendIds');
+     * // Notifies friends.splices
+     * this.push('friendIds', 21);
+     * // Notifies friends.#4.name
+     * this.set(['usersCollection', 21, 'name'], 'Copernicus');
+     * ```
      */
     deriveDynList: function(prop, collection, dyn) {
 
@@ -193,8 +204,7 @@ Funk.CollectionBehavior = {
       // Ensure the dynamic ids list is notifying,
       // hopefully only until Polymer/polymer#3460
       if (dyn.indexOf('.') === -1 && !this.getPropertyInfo(dyn).notify) {
-        throw new Error('Property "' + dyn + '" of store "' +
-                        this.storeName + '" must be notifying ' +
+        throw new Error('Property "' + dyn + '" must be notifying ' +
                         'in order to be used as a dynamic list.');
       }
 
@@ -257,11 +267,12 @@ Funk.CollectionBehavior = {
     },
 
     /**
-     * Converts an array of the format `[{id: 1}, {id: 38}]`
-     * to an object of the format `{ 1: { id: 1 }, 38: { id: 38 } }`.
+     * Converts an array of the format `[{ id: 1 }, { id: 38 }]`
+     * to an object of the format `{ 1: { id: 1 }, 38: { id: 38 } }`
+     * (a Funk collection).
      *
      * This is intended to be used to facilitate collections
-     * used by `deriveItem()` and `deriveList()`
+     * used by `deriveItem()` and `deriveList()`.
      *
      * The second argument `keyName` may override the keying field-name,
      * and defaults to `'id'`.
@@ -280,6 +291,7 @@ Funk.CollectionBehavior = {
 
   };
 
+  /** @polymerBehavior */
   Funk.StoreBehavior = [
     YarnBehaviors.StateBehavior,
     Reflux.ListenerMethods,
@@ -290,8 +302,8 @@ Funk.CollectionBehavior = {
   /**
   An alias of [YarnBehaviors.StateBehavior](https://github.com/yarn-co/yarn-state-behavior)
 
-  @polymerBehavior
-  @demo demo/index.html Funk.ViewBehavior
+  @polymerBehavior Funk.ViewBehavior
+  @demo demo/index.html
   */
   Funk.ViewBehavior = [
     YarnBehaviors.StateBehavior
